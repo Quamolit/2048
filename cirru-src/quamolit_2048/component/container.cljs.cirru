@@ -53,9 +53,6 @@ defn render (store)
 
         group ({})
           ->> store
-            filter $ fn (entry)
-              not $ :dead? (val entry)
-
             map $ fn (entry)
               let
                 (cell-key $ key entry)
@@ -64,6 +61,6 @@ defn render (store)
 
             into $ sorted-map
 
-        comp-debug store $ {}
+        -- comp-debug store $ {}
 
 def comp-container $ create-comp :container render

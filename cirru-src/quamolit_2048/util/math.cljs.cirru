@@ -55,13 +55,12 @@ defn limit-to (path n)
       , path
 
 defn by-pick (path reverse?)
-  fn (cell)
+  fn (entry)
     if reverse?
-      + 0 $ get cell path
-      - 0 $ get cell path
-
-defn x2 (x)
-  * x 2
+      - 0 $ get (val entry)
+        , path
+      + 0 $ get (val entry)
+        , path
 
 defn merge-down
   acc path fix-pos reversed? line
@@ -94,7 +93,7 @@ defn merge-down
           :score second-cell
         next-acc $ if matched?
           assoc acc first-key
-            -> first-cell (update :score x2)
+            -> first-cell (update :score inc)
               assoc path $ fix-pos pos
             , second-key
             -> second-cell $ assoc path (fix-pos pos)
@@ -118,6 +117,8 @@ defn blow-up (board)
         ->> old-board
           filter $ limit-to :x n
           sort-by $ by-pick :y false
+          (fn (x) (-- println $ map (fn (entry) (val entry)) (, x)) (, x))
+
           merge-down ({})
             , :y fix-pos false
 
@@ -134,7 +135,7 @@ defn blow-down (board)
         ->> old-board
           filter $ limit-to :x n
           sort-by $ by-pick :y true
-          (fn (x) (println x) (, x))
+          (fn (x) (-- println $ map (fn (entry) (val entry)) (, x)) (, x))
 
           merge-down ({})
             , :y fix-pos true
@@ -188,7 +189,10 @@ defn add-cell (board)
     (existing-coords $ read-coords board)
       empty-coords $ difference schema/all-coords existing-coords
       new-coord $ new-random-coord empty-coords
-    assoc board (get-id)
-      assoc schema/cell :x (first new-coord)
-        , :y
-        last new-coord
+    if (some? new-coord)
+      assoc board (get-id)
+        assoc schema/cell :x (first new-coord)
+          , :y
+          last new-coord
+
+      , board
