@@ -3,10 +3,15 @@ ns quamolit-2048.core $ :require
   [] quamolit-2048.component.container :refer $ [] comp-container
   [] quamolit.core :refer $ [] render-page configure-canvas setup-events
   [] quamolit.util.time :refer $ [] get-tick
-  [] quamolit.updater.core :refer $ [] updater-fn
+  [] quamolit-2048.updater.core :refer $ [] updater
   [] devtools.core :as devtools
+  [] quamolit-2048.schema :as schema
+  [] quamolit-2048.util.math :refer $ [] new-random-coord get-id new-board
+  [] clojure.set :refer $ [] difference
 
-defonce store-ref $ atom ([])
+enable-console-print!
+
+defonce store-ref $ atom (new-board)
 
 defonce states-ref $ atom ({})
 
@@ -14,8 +19,8 @@ defonce loop-ref $ atom nil
 
 defn dispatch (op op-data)
   let
-    (new-tick $ get-tick)
-      new-store $ updater-fn @store-ref op op-data new-tick
+    (new-store $ updater @store-ref op op-data (get-id))
+
     reset! store-ref new-store
 
 defn render-loop ()
