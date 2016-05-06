@@ -9,6 +9,14 @@ ns quamolit-2048.component.container $ :require
 defn handle-reset (event dispatch)
   dispatch :reset
 
+defn handle-keydown (event dispatch)
+  case (.-keyCode event)
+    38 $ dispatch :up nil
+    40 $ dispatch :down nil
+    37 $ dispatch :left nil
+    39 $ dispatch :right nil
+    , nil
+
 defn render (store)
   fn (state mutate)
     fn (instant tick)
@@ -17,6 +25,8 @@ defn render (store)
           {} (:w 500)
             :h 500
             :fill-style $ hsl 140 70 90
+          , :event
+          {} :keydown handle-keydown
 
         button $ {} :style
           {} (:text "|New Game")
@@ -43,6 +53,9 @@ defn render (store)
 
         group ({})
           ->> store
+            filter $ fn (entry)
+              not $ :dead? (val entry)
+
             map $ fn (entry)
               let
                 (cell-key $ key entry)
@@ -51,6 +64,6 @@ defn render (store)
 
             into $ sorted-map
 
-        -- comp-debug store $ {}
+        comp-debug store $ {}
 
 def comp-container $ create-comp :container render
