@@ -3,6 +3,17 @@ ns quamolit-2048.util.math $ :require
   [] quamolit-2048.schema :as schema
   clojure.set :refer $ [] difference
 
+defn sum-scores (board)
+  reduce
+    fn (acc entry)
+      let
+        (cell $ val entry)
+        if (:dead? cell)
+          , acc
+          + acc $ .pow js/Math 2 (:score cell)
+
+    , 0 board
+
 defn new-random-coord (empty-coords)
   let
     (n $ rand-int (count empty-coords))
@@ -42,12 +53,6 @@ defn purify-board (board)
         not $ :dead? cell
 
     into $ {}
-
-defn has-dead-cell? (board)
-  some
-    fn (entry)
-      :dead? $ val entry
-    , board
 
 defn limit-to (path n)
   fn (entry)

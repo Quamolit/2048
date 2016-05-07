@@ -4,7 +4,7 @@ ns quamolit-2048.component.cell $ :require
   [] quamolit.alias :refer $ [] create-comp rect text group
   [] quamolit.render.element :refer $ [] button scale alpha translate
   [] quamolit.component.debug :refer $ [] comp-debug
-  [] quamolit.util.iterate :refer $ [] iterate-instant
+  [] quamolit.util.iterate :refer $ [] iterate-instant tween
 
 defn init-instant (args state)
   let
@@ -67,7 +67,12 @@ defn render (cell)
 
         scale
           {} :style $ {} :ratio
-            + 0.1 $ * 0.9 (:presence instant)
+            let
+              (decimal $ mod (:score instant) (, 1))
+
+              if (> decimal 0.8)
+                , 1.1
+                + 0.1 $ * 0.9 (:presence instant)
 
           alpha
             {} :style $ {} :opacity (:dead-value instant)
@@ -80,8 +85,24 @@ defn render (cell)
 
                 :w 100
                 :h 100
-                :text-color $ hsl 0 0 100
+                :text-color $ if
+                  > (:score instant)
+                    , 2
+                  hsl 0 0 100
+                  hsl 0 0 50
+
                 :font-size 40
+                :font-family |Futura
+                :surface-color $ hsl
+                  tween ([] 30 8)
+                    [] 1 6
+                    :score instant
+                  tween ([] 60 100)
+                    [] 1 11
+                    :score instant
+                  tween ([] 94 50)
+                    [] 1 11
+                    :score instant
 
         -- comp-debug instant $ {}
 
