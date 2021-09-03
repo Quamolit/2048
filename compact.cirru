@@ -8,11 +8,12 @@
       :ns $ quote
         ns app.comp.container $ :require
           quamolit.util.string :refer $ hsl
-          quamolit.alias :refer $ defcomp group >> line rect
+          quamolit.alias :refer $ defcomp group >> line rect text
           quamolit.render.element :refer $ translate button alpha scale
           app.schema :as schema
           app.math :refer $ sum-scores
           quamolit.hud-logs :refer $ hud-log
+          app.auto :refer $ auto-move! stop-auto!
       :defs $ {}
         |comp-container $ quote
           defcomp comp-container (store)
@@ -27,13 +28,6 @@
               group ({})
                 rect $ {} (:w 500) (:h 500)
                   :fill-style $ hsl 29 17 68
-                  :event $ &{} :keydown
-                    defn handle-keydown (e d!)
-                      case-default (.-keyCode e) nil
-                        38 $ d! :up nil
-                        40 $ d! :down nil
-                        37 $ d! :left nil
-                        39 $ d! :right nil
                 button $ {} (:text "|New Game")
                   :text-color $ hsl 0 0 100
                   :surface-color $ hsl 0 90 80
@@ -43,7 +37,7 @@
                   :y -200
                   :font-size 16
                   :event $ &{} :click
-                    defn handle-reset (e d!) (d! :reset nil)
+                    defn handle-reset (e d!) (d! :reset nil) (stop-auto!)
                 button $ {}
                   :text $ str "|Scores: "
                     sum-scores $ :board store
@@ -54,6 +48,16 @@
                   :h 40
                   :x 320
                   :y -140
+                button $ {} (:text |Auto)
+                  :text-color $ hsl 0 0 100
+                  :surface-color $ hsl 220 90 80
+                  :font-size 16
+                  :w 100
+                  :h 40
+                  :x 320
+                  :y -40
+                  :event $ &{} :click
+                    fn (e d!) (auto-move! 0 d!)
                 group ({}) & $ -> schema/all-coords (.to-list)
                   map $ fn (coord)
                     rect $ {}
@@ -71,6 +75,17 @@
                     :score $ last pair
                   .map-pair $ fn (cell-key cell)
                     comp-cell (>> states cell-key) cell
+        |move-toward $ quote
+          defn move-toward (target from elapsed factor)
+            let
+                step $ * factor elapsed
+              if (> target from)
+                if
+                  < (- target from) step
+                  , target $ + from step
+                if
+                  < (- from target) step
+                  , target $ - from step
         |comp-cell $ quote
           defcomp comp-cell (states cell)
             let
@@ -78,14 +93,8 @@
                 state $ or (:data states)
                   {} (:stage :init)
                     :x $ :x cell
-                    :x-v 0
-                    :x-target $ :x cell
                     :y $ :y cell
-                    :y-v 0
-                    :y-target $ :y cell
                     :score 0
-                    :score-v 0
-                    :score-target 0
               [] (gen-tick-fn state cursor cell)
                 translate
                   {}
@@ -124,6 +133,14 @@
                           tween ([] 30 8) ([] 1 6) (:score state)
                           tween ([] 60 100) ([] 1 11) (:score state)
                           tween ([] 94 50) ([] 1 11) (:score state)
+                      ; text $ {} (:x 0) (:y 30)
+                        :fill-style $ hsl 0 0 70
+                        :text-align :center
+                        :base-linee :middle
+                        :size 14
+                        :font-family |Optima
+                        :max-width 400
+                        :text $ str (:stage state)
         |tween $ quote
           defn tween (range-data range-bound x)
             let-sugar
@@ -136,42 +153,34 @@
         |gen-tick-fn $ quote
           defn gen-tick-fn (state cursor cell)
             fn (elapsed d!)
-              case-default (:stage state) (println "\"unknown stage" state)
-                :init $ d! cursor (assoc state :stage :stable)
-                :stable $ if
-                  > (:score cell) (:score state)
-                  d! cursor $ -> state (assoc :stage :growing)
-                    assoc :x-target $ :x cell
-                    assoc :y-target $ :y cell
-                    assoc :score-target $ :score cell
-                :growing $ let
-                    next-state $ -> state
-                      update :x $ fn (x)
-                        + x $ * elapsed (:x-v state)
-                      update :y $ fn (y)
-                        + y $ * elapsed (:y-v state)
-                      update :score $ fn (s)
-                        + s $ * elapsed (:score-v state)
-                      assoc :score-v $ * 4
-                        - (:score cell) (:score state)
-                      assoc :x-v $ * 4
-                        - (:x cell) (:x state)
-                      assoc :y-v $ * 4
-                        - (:y cell) (:y state)
-                  if
-                    < (:score state) (:score cell)
-                    d! cursor next-state
-                    d! cursor $ -> state
-                      assoc :x $ :x cell
-                      assoc :y $ :y cell
-                      assoc :score $ :score cell
-                      assoc :stage :stable
-                :leaving $ d! cursor
-                  -> state
-                    update :x $ fn (x)
-                      + x $ * elapsed (:x-v state)
-                    update :y $ fn (y)
-                      + y $ * elapsed (:y-v state)
+              let
+                  moved-state $ if
+                    and
+                      = (:x state) (:x cell)
+                      = (:y state) (:y cell)
+                    , state
+                      -> state
+                        assoc :x $ move-toward (:x cell) (:x state) elapsed 8
+                        assoc :y $ move-toward (:y cell) (:y state) elapsed 8
+                case-default (:stage state) (println "\"unknown stage" state)
+                  :init $ d! cursor (assoc state :stage :stable)
+                  :stable $ if
+                    > (:score cell) (:score state)
+                    d! cursor $ -> moved-state (assoc :stage :growing)
+                    if
+                      or
+                        not= (:x cell) (:x state)
+                        not= (:y cell) (:y state)
+                      d! cursor moved-state
+                  :growing $ let
+                      next-state $ -> moved-state
+                        assoc :score $ move-toward (:score cell) (:score state) elapsed 4
+                    if
+                      < (:score state) (:score cell)
+                      d! cursor next-state
+                      d! cursor $ -> next-state
+                        assoc :score $ :score cell
+                        assoc :stage :stable
     |app.schema $ {}
       :ns $ quote (ns app.schema)
       :defs $ {}
@@ -228,6 +237,21 @@
                       not= (purify-board board) (purify-board merged-board)
                       add-cell merged-board
                       , merged-board
+    |app.auto $ {}
+      :ns $ quote (ns app.auto)
+      :defs $ {}
+        |auto-move! $ quote
+          defn auto-move! (n d!)
+            case-default (.rem n 4) (d! :up nil)
+              1 $ d! :right nil
+              2 $ d! :down nil
+              3 $ d! :left nil
+            reset! *looper $ js/setTimeout
+              fn () $ auto-move! (inc n) d!
+              , 400
+        |*looper $ quote (defatom *looper 0)
+        |stop-auto! $ quote
+          defn stop-auto! () $ js/clearTimeout @*looper
     |app.main $ {}
       :ns $ quote
         ns app.main $ :require
@@ -238,6 +262,7 @@
           "\"./calcit.build-errors" :default build-errors
           "\"bottom-tip" :default hud!
           app.config :as config
+          app.auto :refer $ stop-auto!
       :defs $ {}
         |main! $ quote
           defn main! () (load-console-formatter!)
@@ -246,6 +271,13 @@
               configure-canvas target
               setup-events target dispatch!
               render-loop!
+              dispatch! :reset nil
+              js/window.addEventListener "\"keydown" $ fn (e) (stop-auto!)
+                case-default (.-keyCode e) nil
+                  38 $ dispatch! :up nil
+                  40 $ dispatch! :down nil
+                  37 $ dispatch! :left nil
+                  39 $ dispatch! :right nil
         |*store $ quote
           defatom *store $ {}
             :states $ {}
@@ -276,7 +308,7 @@
         |*raq-loop $ quote (defatom *raq-loop nil)
         |reload! $ quote
           defn reload! () $ if (nil? build-errors)
-            do (js/clearTimeout @*render-loop) (js/cancelAnimationFrame @*raq-loop) (render-loop!) (hud! "\"ok~" "\"Ok")
+            do (js/clearTimeout @*render-loop) (stop-auto!) (js/cancelAnimationFrame @*raq-loop) (render-loop!) (hud! "\"ok~" "\"Ok")
             hud! "\"error" build-errors
     |app.math $ {}
       :ns $ quote
