@@ -531,6 +531,38 @@
                                 :type :expr
                                 :at 1630575830103
                                 :by |_yzgLY-K2
+                              |yv $ {}
+                                :data $ {}
+                                  |T $ {} (:text |:event) (:type :leaf) (:at 1630650284302) (:by |_yzgLY-K2)
+                                  |j $ {}
+                                    :data $ {}
+                                      |T $ {} (:text |&{}) (:type :leaf) (:at 1630650286673) (:by |_yzgLY-K2)
+                                      |j $ {} (:text |:click) (:type :leaf) (:at 1630650289608) (:by |_yzgLY-K2)
+                                      |r $ {}
+                                        :data $ {}
+                                          |T $ {} (:text |fn) (:type :leaf) (:at 1630650292990) (:by |_yzgLY-K2)
+                                          |j $ {}
+                                            :data $ {}
+                                              |T $ {} (:text |e) (:type :leaf) (:at 1630650295391) (:by |_yzgLY-K2)
+                                              |j $ {} (:text |d!) (:type :leaf) (:at 1630650296614) (:by |_yzgLY-K2)
+                                            :type :expr
+                                            :at 1630650293768
+                                            :by |_yzgLY-K2
+                                          |r $ {}
+                                            :data $ {}
+                                              |T $ {} (:text |js/document.body.requestFullscreen) (:type :leaf) (:at 1630650302982) (:by |_yzgLY-K2)
+                                            :type :expr
+                                            :at 1630650297927
+                                            :by |_yzgLY-K2
+                                        :type :expr
+                                        :at 1630650291242
+                                        :by |_yzgLY-K2
+                                    :type :expr
+                                    :at 1630650284625
+                                    :by |_yzgLY-K2
+                                :type :expr
+                                :at 1630650281800
+                                :by |_yzgLY-K2
                               |T $ {} (:text |{}) (:type :leaf) (:at 1630575830103) (:by |_yzgLY-K2)
                               |j $ {}
                                 :data $ {}

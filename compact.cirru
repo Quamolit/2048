@@ -48,6 +48,8 @@
                   :h 40
                   :x 320
                   :y -140
+                  :event $ &{} :click
+                    fn (e d!) (js/document.body.requestFullscreen)
                 button $ {} (:text |Auto)
                   :text-color $ hsl 0 0 100
                   :surface-color $ hsl 220 90 80
