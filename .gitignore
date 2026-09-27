@@ -10,3 +10,5 @@ node_modules/
 dist/
 
 cirru-src/
+.pnp.cjs
+.pnp.loader.mjs
