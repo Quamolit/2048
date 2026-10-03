@@ -19,11 +19,24 @@
 
     canvas {
       display: block;
+      width: 100vw;
+      height: 100vh;
     }
+    aside { position: fixed; top: 16px; left: 16px; max-width: min(340px, calc(100vw - 64px)); padding: 16px; border-radius: 12px; background: #fffffff0; box-shadow: 0 4px 24px #0002; font: 14px system-ui; }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    button { padding: 7px 10px; margin: 3px; border: 1px solid #ccbbaa; border-radius: 6px; background: white; cursor: pointer; }
+    #clock { color: #777; }
   </style>
 </head>
 <body>
   <canvas id="app" ></canvas>
+  <aside>
+    <h1>2048 · Quamolit</h1>
+    <p id="status"></p>
+    <div><button id="reset">新游戏</button><button id="auto">自动演示</button><button id="pause">暂停</button><button id="fullscreen">全屏</button></div>
+    <div><button data-direction="3" aria-label="向左">←</button><button data-direction="0" aria-label="向上">↑</button><button data-direction="2" aria-label="向下">↓</button><button data-direction="1" aria-label="向右">→</button></div>
+    <p>方向键移动；相同数字合并。<span id="clock"></span></p>
+  </aside>
 
   <script type="module" src="./main.mjs" ></script>
 

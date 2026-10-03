@@ -3,579 +3,522 @@
   :about "|Machine-generated snapshot. Do not edit directly — changes will be overwritten. Use `calcit query` to inspect and `calcit edit`/`calcit tree` to modify. Run `calcit docs agents --contract` before mutations; use `--full` for first orientation or changed contract digest. Manual edits must follow format and schema conventions, then run `calcit edit format`."
   :package |app
   :entries $ {} $ :default
-    {} (:description |) (:init-fn 'app.bootstrap/main!) (:mode :js) (:reload-fn 'app.bootstrap/reload!) (:target :browser)
+    {} (:description |) (:init-fn 'app.main/main!) (:mode :js) (:reload-fn 'app.main/reload!) (:target :browser)
       :feature-policy $ {}
-      :modules $ [] |pointed-prompt/ |js-ffi/ |quamolit/
+      :modules $ [] |js-ffi/ |quamolit/
       :type-slots $ {}
-  :files $ {}
-    'app.auto $ %{} 'FileEntry
+  :files $ {} $ 'app.main
+    %{} 'FileEntry
       :defs $ {}
-        '*looper $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defatom *looper 0
+        'Game $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defstruct Game (:seed 'Number) (:next-id 'Number) (:moves 'Number) (:event-time 'Number)
+            :tiles $ :: 'List 'app.main/Tile
+            :ghosts $ :: 'List 'app.main/Tile
           :examples $ []
-          :schema $ :: 'Dynamic
-        'auto-move! $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn auto-move! (n d!)
-            case-default (.rem n 4) (d! :up nil)
-              1 $ d! :right nil
-              2 $ d! :down nil
-              3 $ d! :left nil
-            reset! *looper $ js/setTimeout
-              fn () $ auto-move! (inc n) d!
-              , 400
+          :schema $ :: 'StructDef
+        'Slide $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defstruct Slide
+            :tiles $ :: 'List 'app.main/Tile
+            :ghosts $ :: 'List 'app.main/Tile
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic 'Dynamic
+          :schema $ :: 'StructDef
+        'Tile $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defstruct Tile (:id 'Number) (:x 'Number) (:y 'Number) (:level 'Number) (:from-x 'Number) (:from-y 'Number) (:from-level 'Number) (:start 'Number) (:dead? 'Bool)
+          :examples $ []
+          :schema $ :: 'StructDef
+        'board-nodes $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn board-nodes (width height)
+            let
+                scale $ clamp
+                  / (- width 32) 500
+                  , 0.1 1
+                root $ scene/SceneNode :id |board :key |board :parent | :bindings ([]) :interaction (scene/SceneInteraction :none) :content $ scene/SceneContent :group
+                  scene/GroupNode :transform
+                    scene/Matrix2D :a scale :b 0 :c 0 :d scale :e (/ width 2) :f $ / height 2
+                    , :clip (scene/ClipSpec :none) :opacity 1
+                backdrop $ rect-node |board-background |board -250 -250 500 500 $ color 29 0.17 0.68 1
+              [] root backdrop
+          :examples $ []
+          :schema $ :: 'Fn $ {}
+            :args $ [] 'Number 'Number
+            :return $ :: 'List 'quamolit.scene-ir/SceneNode
+        'board-total $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn board-total (model)
+            foldl (:tiles model) 0 $ fn (total tile)
+              + total $ pow 2 $ :level tile
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ [] 'app.main/Game
+        'cell-at $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn cell-at (tiles x y)
+            find tiles $ fn (tile)
+              and
+                = (:x tile) x
+                = (:y tile) y
+          :examples $ []
+          :schema $ :: 'Fn $ {}
+            :args $ [] (:: 'List 'app.main/Tile) 'Number 'Number
+            :return $ :: 'Option 'app.main/Tile
+        'clamp $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn clamp (value low high)
+            if (< value low) low $ if (> value high) high value
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ [] 'Number 'Number 'Number
+        'collect-line $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn collect-line (tiles direction line slot collected)
+            if (= slot 4) collected $ let
+                position $ coordinate direction line slot
+              match
+                cell-at tiles (:x position) (:y position)
+                (:none)
+                  recur tiles direction line (inc slot) collected
+                (:some tile)
+                  recur tiles direction line (inc slot) (conj collected tile)
+          :examples $ []
+          :schema $ :: 'Fn $ {}
+            :args $ [] (:: 'List 'app.main/Tile) 'Number 'Number 'Number $ :: 'List 'app.main/Tile
+            :return $ :: 'List 'app.main/Tile
+        'color $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn color (h s l a)
+            let
+                saturation $ clamp s 0 1
+                lightness $ clamp l 0 1
+              motion/ColorRgba :r (hsl-channel h saturation lightness 0) :g (hsl-channel h saturation lightness 8) :b (hsl-channel h saturation lightness 4) :a a
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'quamolit.motion/ColorRgba)
+            :args $ [] 'Number 'Number 'Number 'Number
+        'coordinate $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn coordinate (direction line slot)
+            case direction
+              0 $ motion/Vec2 :x line :y slot
+              1 $ motion/Vec2 :x (- 3 slot) :y line
+              2 $ motion/Vec2 :x line :y $ - 3 slot
+              3 $ motion/Vec2 :x slot :y line
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'quamolit.motion/Vec2)
+            :args $ [] 'Number 'Number 'Number
+        'draw! $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn draw! (context document width height dpr)
+            let
+                root $ scene/SceneNode :id |pixels :key |pixels :parent | :bindings ([]) :interaction (scene/SceneInteraction :none) :content $ scene/SceneContent :group
+                  scene/GroupNode :transform
+                    scene/Matrix2D :a dpr :b 0 :c 0 :d dpr :e 0 :f 0
+                    , :clip (scene/ClipSpec :none) :opacity 1
+                children $ map (:nodes document)
+                  fn (node)
+                    if
+                      = (:parent node) |
+                      struct-with node $ :parent |pixels
+                      , node
+              renderer/draw-document! context
+                scene/SceneDocument :nodes $ concat ([] root) children
+                , width height no-image
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'Unit)
+            :args $ [] 'js-ffi.canvas-batches/CanvasContextHost 'quamolit.scene-ir/SceneDocument 'Number 'Number 'Number
             :features $ #{} :js-ffi
-        'stop-auto! $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn stop-auto! () (js/clearTimeout @*looper)
+        'exit-at $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn exit-at (tile time)
+            if (:dead? tile)
+              step-at 1 0
+                + (:start tile) (travel-duration tile)
+                , 4 time
+              , 1
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ []
-            :features $ #{} :js-ffi
-      :ns $ %{} 'NsEntry (:doc |)
-        :code $ quote $ ns app.auto
-    'app.bootstrap $ %{} 'FileEntry
-      :defs $ {}
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ [] 'app.main/Tile 'Number
+        'flatten-nodes $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn flatten-nodes (lists)
+            list-match lists
+              () $ []
+              (head tail)
+                concat head $ flatten-nodes tail
+          :examples $ []
+          :schema $ :: 'Fn $ {}
+            :args $ [] $ :: 'List (:: 'List 'quamolit.scene-ir/SceneNode)
+            :return $ :: 'List 'quamolit.scene-ir/SceneNode
+        'from-levels $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn from-levels (levels seed)
+            assert |invalid-board-levels $ and
+              = (count levels) 16
+              every? levels $ fn (level)
+                and (motion/finite-number? level) (>= level 0)
+                  = level $ floor level
+            assert |invalid-board-seed $ and (motion/finite-number? seed) (> seed 0) (< seed 2147483647)
+              = seed $ floor seed
+            Game :seed seed :next-id 16 :moves 0 :event-time 0 :ghosts ([]) :tiles $ filter
+              map-indexed levels $ fn (index level)
+                new-tile index (remainder index 4)
+                  floor $ / index 4
+                  , level 0
+              fn (tile)
+                > (:level tile) 0
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'app.main/Game)
+            :args $ [] (:: 'List 'Number) 'Number
+        'game-over? $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn game-over? (model)
+            and
+              =
+                count $ :tiles model
+                , 16
+              every? (range 4)
+                fn (direction)
+                  same-board? (:tiles model)
+                    :tiles $ slide model (:event-time model) direction
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'Bool)
+            :args $ [] 'app.main/Game
+        'hsl-channel $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn hsl-channel (h s l offset)
+            let
+                k $ remainder
+                  + (/ h 30) offset
+                  , 12
+                a $ * s $ if (< l 0.5) l (- 1 l)
+                low $ if
+                  < (- k 3) (- 9 k)
+                  - k 3
+                  - 9 k
+                high $ if (> low -1) low -1
+              - l $ * a $ if (< high 1) high 1
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ [] 'Number 'Number 'Number 'Number
+        'initial $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn initial (seed)
+            spawn
+              spawn
+                from-levels
+                  map (range 16)
+                    fn (index) 0
+                  , seed
+                , 0
+              , 0
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'app.main/Game)
+            :args $ [] 'Number
+        'level-at $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn level-at (tile time)
+            step-at (:from-level tile) (:level tile) (:start tile) 4 time
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ [] 'app.main/Tile 'Number
+        'levels $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn levels (model)
+            map (range 16)
+              fn (index)
+                match
+                  cell-at (:tiles model) (remainder index 4)
+                    floor $ / index 4
+                  (:none) 0
+                  (:some tile) (:level tile)
+          :examples $ []
+          :schema $ :: 'Fn $ {}
+            :args $ [] 'app.main/Game
+            :return $ :: 'List 'Number
         'main! $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn main! () &unit
+          :code $ quote $ defn main! ()
+            assert |invalid-game-initial $ = 2 $ count
+              :tiles $ initial 17
+            assert |invalid-game-scene $ >
+              count $ :nodes $ sample (initial 17) 0.125 1000 700
+              , 18
+            , &unit
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Unit)
             :args $ []
+        'merge-line $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn merge-line (tiles direction line slot time result)
+            list-match tiles
+              () result
+              (tile tail)
+                let
+                    position $ coordinate direction line slot
+                    merge? $ and
+                      > (count tail) 0
+                      = (:level tile)
+                        :level $ &list:nth tail 0
+                    level $ if merge?
+                      inc $ :level tile
+                      :level tile
+                    next $ struct-with result $ :tiles
+                      conj (:tiles result) (retarget tile position level false time)
+                    combined $ if merge?
+                      struct-with next $ :ghosts $ conj (:ghosts next)
+                        retarget (&list:nth tail 0) position (:level tile) true time
+                      , next
+                  recur
+                    if merge? (rest tail) tail
+                    , direction line (inc slot) time combined
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'app.main/Slide)
+            :args $ [] (:: 'List 'app.main/Tile) 'Number 'Number 'Number 'Number 'app.main/Slide
+        'move $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn move (model time direction)
+            let
+                result $ slide model time direction
+              if
+                same-board? (:tiles model) (:tiles result)
+                , model $ spawn
+                  struct-with model (:event-time time)
+                    :moves $ inc $ :moves model
+                    :tiles $ :tiles result
+                    :ghosts $ concat
+                      filter (:ghosts model)
+                        fn (tile)
+                          > (exit-at tile time) 0
+                      :ghosts result
+                  , time
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'app.main/Game)
+            :args $ [] 'app.main/Game 'Number 'Number
+        'new-tile $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn new-tile (id x y level time)
+            Tile :id id :x x :y y :level level :from-x x :from-y y :from-level 0 :start time :dead? false
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'app.main/Tile)
+            :args $ [] 'Number 'Number 'Number 'Number 'Number
+        'next-seed $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn next-seed (seed)
+            remainder (* seed 48271) 2147483647
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ [] 'Number
+        'no-image $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn no-image (id version) (raise |game-has-no-images)
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'js-ffi.browser/ImageHost)
+            :args $ [] 'String 'Number
+        'rect-node $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn rect-node (id parent x y width height fill)
+            scene/SceneNode :id id :key id :parent parent :bindings ([]) :interaction (scene/SceneInteraction :none) :content $ scene/SceneContent :rect $ scene/RectNode :x x :y y :width width :height height :fill fill
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'quamolit.scene-ir/SceneNode)
+            :args $ [] 'String 'String 'Number 'Number 'Number 'Number 'quamolit.motion/ColorRgba
         'reload! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn reload! () &unit
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Unit)
             :args $ []
-      :ns $ %{} 'NsEntry (:doc |)
-        :code $ quote $ ns app.bootstrap
-    'app.comp.container $ %{} 'FileEntry
-      :defs $ {}
-        'comp-cell $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defcomp comp-cell (states cell)
-            let
-                cursor $ :cursor states
-                state $ or (:data states)
-                  {} (:stage :init)
-                    :x $ :x cell
-                    :y $ :y cell
-                    :score 0
-              [] (gen-tick-fn state cursor cell)
-                translate
-                  {}
-                    :x $ -
-                      * 120 $ :x state
-                      , 180
-                    :y $ -
-                      * 120 $ :y state
-                      , 180
-                  scale
-                    &{} :ratio $ if
-                      < (:score state) 1
-                      :score state
-                      let
-                          decimal $ .rem
-                            or (:score state) 0
-                            , 1
-                        if
-                          and (> decimal 0.92) (< decimal 0.95)
-                          , 1.1 1
-                    alpha (&{} :opacity 1)
-                      button $ {}
-                        :text $ str $ let
-                            score $ :score state
-                          js/Math.pow 2 $ js/Math.floor $ + score 0.4
-                        :w 100
-                        :h 100
-                        :text-color $ if
-                          > (:score state) 2
-                          hsl 0 0 100
-                          hsl 0 0 50
-                        :font-size 40
-                        :font-family |Futura
-                        :surface-color $ hsl
-                          tween ([] 30 8) ([] 1 6) (:score state)
-                          tween ([] 60 100) ([] 1 11) (:score state)
-                          tween ([] 94 50) ([] 1 11) (:score state)
-                      ; text $ {} (:x 0) (:y 30)
-                        :fill-style $ hsl 0 0 70
-                        :text-align :center
-                        :base-linee :middle
-                        :size 14
-                        :font-family |Optima
-                        :max-width 400
-                        :text $ str $ :stage state
+        'remainder $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn remainder (value divisor)
+            - value $ * divisor $ floor (/ value divisor)
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic 'Dynamic
-            :features $ #{} :js-ffi
-        'comp-container $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defcomp comp-container (store)
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ [] 'Number 'Number
+        'reset $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn reset (model time)
+            assert |invalid-game-event $ and (motion/finite-number? time)
+              >= time $ :event-time model
             let
-                states $ :states store
-                state $ either (:data states) ({})
-                cursor $ []
-              ; &doseq
-                x $ .split-lines $ format-cirru-edn (:board store)
-                hud-log x
-              group ({})
-                rect $ {} (:w 500) (:h 500)
-                  :fill-style $ hsl 29 17 68
-                button $ {} (:text "|New Game")
-                  :text-color $ hsl 0 0 100
-                  :surface-color $ hsl 0 90 80
-                  :w 100
-                  :h 40
-                  :x 320
-                  :y -200
-                  :font-size 16
-                  :event $ &{} :click $ defn handle-reset (e d!) (d! :reset nil) (stop-auto!)
-                button $ {}
-                  :text $ str "|Scores: " $ sum-scores (:board store)
-                  :text-color $ hsl 0 0 100
-                  :surface-color $ hsl 120 90 80
-                  :font-size 16
-                  :w 100
-                  :h 40
-                  :x 320
-                  :y -140
-                  :event $ &{} :click $ fn (e d!) (js/document.body.requestFullscreen)
-                button $ {} (:text |Auto)
-                  :text-color $ hsl 0 0 100
-                  :surface-color $ hsl 220 90 80
-                  :font-size 16
-                  :w 100
-                  :h 40
-                  :x 320
-                  :y -40
-                  :event $ &{} :click $ fn (e d!) (auto-move! 0 d!)
-                group ({}) & $ -> schema/all-coords (.to-list)
-                  map $ fn (coord)
-                    rect $ {}
-                      :fill-style $ hsl 30 37 89 0.35
-                      :x $ -
-                        * 120 $ first coord
-                        , 180
-                      :y $ -
-                        * 120 $ last coord
-                        , 180
-                      :w 100
-                      :h 100
-                group ({}) & $ -> (:board store) (.to-list)
-                  .sort-by $ fn (pair)
-                    :score $ last pair
-                  .map-pair $ fn (cell-key cell)
-                    comp-cell (>> states cell-key) cell
+                base $ Game :seed
+                  next-seed $ :seed model
+                  , :next-id (:next-id model) :moves 0 :event-time time :tiles ([]) :ghosts $ concat
+                    filter (:ghosts model)
+                      fn (tile)
+                        > (exit-at tile time) 0
+                    map (:tiles model)
+                      fn (tile)
+                        retarget tile
+                          motion/Vec2 :x (x-at tile time) :y $ y-at tile time
+                          :level tile
+                          , true time
+              spawn (spawn base time) time
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic
-            :features $ #{} :js-ffi
-        'gen-tick-fn $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn gen-tick-fn (state cursor cell)
-            fn (elapsed d!)
-              let
-                  moved-state $ if
+          :schema $ :: 'Fn $ {} (:return 'app.main/Game)
+            :args $ [] 'app.main/Game 'Number
+        'retarget $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn retarget (tile position level dead? time)
+            struct-with tile
+              :x $ :x position
+              :y $ :y position
+              :level level
+              :dead? dead?
+              :start time
+              :from-x $ x-at tile time
+              :from-y $ y-at tile time
+              :from-level $ level-at tile time
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'app.main/Tile)
+            :args $ [] 'app.main/Tile 'quamolit.motion/Vec2 'Number 'Bool 'Number
+        'same-board? $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn same-board? (before after)
+            and
+              = (count before) (count after)
+              every? before $ fn (tile)
+                match
+                  find after $ fn (other)
+                    = (:id tile) (:id other)
+                  (:none) false
+                  (:some other)
                     and
-                      = (:x state) (:x cell)
-                      = (:y state) (:y cell)
-                    , state $ -> state
-                      assoc :x $ move-toward (:x cell) (:x state) elapsed 8
-                      assoc :y $ move-toward (:y cell) (:y state) elapsed 8
-                case-default (:stage state) (println "|unknown stage" state)
-                  :init $ d! cursor $ assoc state :stage :stable
-                  :stable $ if
-                    > (:score cell) (:score state)
-                    d! cursor $ -> moved-state $ assoc :stage :growing
-                    if
-                      or
-                        not= (:x cell) (:x state)
-                        not= (:y cell) (:y state)
-                      d! cursor moved-state
-                  :growing $ let
-                      next-state $ -> moved-state $ assoc :score
-                        move-toward (:score cell) (:score state) elapsed 4
-                    if
-                      < (:score state) (:score cell)
-                      d! cursor next-state
-                      d! cursor $ -> next-state
-                        assoc :score $ :score cell
-                        assoc :stage :stable
+                      = (:x tile) (:x other)
+                      = (:y tile) (:y other)
+                      = (:level tile) (:level other)
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic 'Dynamic 'Dynamic
-        'move-toward $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn move-toward (target from elapsed factor)
+          :schema $ :: 'Fn $ {} (:return 'Bool)
+            :args $ [] (:: 'List 'app.main/Tile) (:: 'List 'app.main/Tile)
+        'sample $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn sample (model time width height)
+            assert |invalid-game-time $ and (motion/finite-number? time) (>= time 0)
+            assert |invalid-game-viewport $ and (motion/finite-number? width) (motion/finite-number? height) (> width 0) (> height 0)
             let
-                step $ * factor elapsed
+                slots $ map (range 16)
+                  fn (index)
+                    rect-node (str |slot- index) |board
+                      -
+                        * 120 $ remainder index 4
+                        , 230
+                      -
+                        * 120 $ floor $ / index 4
+                        , 230
+                      , 100 100 $ color 30 0.37 0.89 0.35
+                drawn $ filter
+                  concat (:tiles model) (:ghosts model)
+                  fn (tile)
+                    > (scale-at tile time) 0
+                sorted $ .sort-by drawn tile-level
+                tiles $ flatten-nodes $ map sorted
+                  fn (tile) (tile-nodes tile time)
+              scene/SceneDocument :nodes $ concat (board-nodes width height) slots tiles
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'quamolit.scene-ir/SceneDocument)
+            :args $ [] 'app.main/Game 'Number 'Number 'Number
+        'scale-at $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn scale-at (tile time)
+            let
+                value $ level-at tile time
+                decimal $ remainder value 1
+                growing $ if (< value 1) value $ if
+                  and (> decimal 0.92) (< decimal 0.95)
+                  , 1.1 1
+              * growing $ exit-at tile time
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ [] 'app.main/Tile 'Number
+        'slide $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn slide (model time direction)
+            assert |invalid-direction $ and
+              = direction $ floor direction
+              >= direction 0
+              < direction 4
+            assert |invalid-game-event $ and (motion/finite-number? time)
+              >= time $ :event-time model
+            slide-lines model direction 0 time $ Slide :tiles ([]) :ghosts $ []
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'app.main/Slide)
+            :args $ [] 'app.main/Game 'Number 'Number
+        'slide-lines $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn slide-lines (model direction line time result)
+            if (= line 4) result $ let
+                tiles $ collect-line (:tiles model) direction line 0 $ slice (:tiles model) 0 0
+              recur model direction (inc line) time $ merge-line tiles direction line 0 time result
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'app.main/Slide)
+            :args $ [] 'app.main/Game 'Number 'Number 'Number 'app.main/Slide
+        'spawn $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn spawn (model time)
+            let
+                vacancies $ filter (range 16)
+                  fn (index)
+                    match
+                      cell-at (:tiles model) (remainder index 4)
+                        floor $ / index 4
+                      (:none) true
+                      (:some tile) false
+              if (empty? vacancies) model $ let
+                  seed $ next-seed $ :seed model
+                  slot $ &list:nth vacancies $ floor
+                    * (count vacancies) (/ seed 2147483647)
+                  tile $ new-tile (:next-id model) (remainder slot 4)
+                    floor $ / slot 4
+                    , 1 time
+                struct-with model (:seed seed)
+                  :next-id $ inc $ :next-id model
+                  :tiles $ conj (:tiles model) tile
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'app.main/Game)
+            :args $ [] 'app.main/Game 'Number
+        'step-at $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn step-at (from target start speed time)
+            let
+                distance $ * speed $ if (< time start) 0 (- time start)
               if (> target from)
-                if
-                  < (- target from) step
-                  , target $ + from step
-                if
-                  < (- from target) step
-                  , target $ - from step
+                clamp (+ from distance) from target
+                clamp (- from distance) target from
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic 'Dynamic 'Dynamic 'Dynamic
-        'tween $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn tween (range-data range-bound x)
-            let-sugar
-                  [] a b
-                  , range-data
-                ([] c d) range-bound
-              + a $ /
-                * (- b a) (- x c)
-                - d c
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ [] 'Number 'Number 'Number 'Number 'Number
+        'tile-color $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn tile-color (value)
+            color
+              + 30 $ * (- value 1) (/ -22 5)
+              + 0.6 $ * (- value 1) 0.04
+              + 0.94 $ * (- value 1) -0.044
+              , 1
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic 'Dynamic 'Dynamic
-      :ns $ %{} 'NsEntry (:doc |)
-        :code $ quote $ ns app.comp.container
-          :require
-            quamolit.util.string :refer $ hsl
-            quamolit.alias :refer $ defcomp group >> line rect text
-            quamolit.render.element :refer $ translate button alpha scale
-            app.schema :as schema
-            app.math :refer $ sum-scores
-            quamolit.hud-logs :refer $ hud-log
-            app.auto :refer $ auto-move! stop-auto!
-    'app.config $ %{} 'FileEntry
-      :defs $ {} $ 'dev?
-        %{} 'CodeEntry (:doc |)
-          :code $ quote $ def dev?
-            = |dev $ get-env |mode |release
+          :schema $ :: 'Fn $ {} (:return 'quamolit.motion/ColorRgba)
+            :args $ [] 'Number
+        'tile-level $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn tile-level (tile) (:level tile)
           :examples $ []
-          :schema $ :: 'Dynamic
-      :ns $ %{} 'NsEntry (:doc |)
-        :code $ quote $ ns app.config
-    'app.main $ %{} 'FileEntry
-      :defs $ {}
-        '*raq-loop $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defatom *raq-loop nil
-          :examples $ []
-          :schema $ :: 'Dynamic
-        '*render-loop $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defatom *render-loop nil
-          :examples $ []
-          :schema $ :: 'Dynamic
-        '*store $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defatom *store
-            {}
-              :states $ {}
-              :board $ {}
-          :examples $ []
-          :schema $ :: 'Dynamic
-        'dispatch! $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn dispatch! (op op-data)
-            if (list? op)
-              recur :states $ [] op op-data
-              do
-                if
-                  and config/dev? $ not= op :states
-                  println |dispatch op op-data
-                ; js/console.log @*store
-                let
-                    new-tick $ get-tick
-                    new-store $ updater @*store op op-data new-tick
-                  reset! *store new-store
-          :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic 'Dynamic
-            :features $ #{} :js-ffi
-        'main! $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn main! () (load-console-formatter!)
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ [] 'app.main/Tile
+        'tile-nodes $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn tile-nodes (tile time)
             let
-                target $ js/document.querySelector |#app
-              configure-canvas target
-              setup-events target dispatch!
-              render-loop! 0
-              dispatch! :reset nil
-              js/window.addEventListener |keydown $ fn (e) (stop-auto!)
-                case-default (.-keyCode e) nil
-                  38 $ dispatch! :up nil
-                  40 $ dispatch! :down nil
-                  37 $ dispatch! :left nil
-                  39 $ dispatch! :right nil
+                id $ str |tile- $ :id tile
+                scale $ scale-at tile time
+                value $ level-at tile time
+                label $ str $ pow 2
+                  floor $ + value 0.4
+                root $ scene/SceneNode :id id :key id :parent |board :bindings ([]) :interaction (scene/SceneInteraction :none) :content $ scene/SceneContent :group
+                  scene/GroupNode :transform
+                    scene/Matrix2D :a scale :b 0 :c 0 :d scale :e
+                      -
+                        * 120 $ x-at tile time
+                        , 180
+                      , :f $ -
+                        * 120 $ y-at tile time
+                        , 180
+                    , :clip (scene/ClipSpec :none) :opacity $ exit-at tile time
+                background $ rect-node (str id |/background) id -50 -50 100 100 $ tile-color value
+                text $ scene/SceneNode :id (str id |/label) :key (str id |/label) :parent id :bindings ([]) :interaction (scene/SceneInteraction :none) :content $ scene/SceneContent :text
+                  scene/TextNode :x
+                    * -12 $ count label
+                    , :y 0 :size 40 :text label :fill
+                      if (> value 2) (color 0 0 1 1) (color 0 0 0.5 1)
+                      , :font $ scene/FontSpec :family | :fallback (scene/FontFallback :monospace) :version 0
+              [] root background text
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ []
-            :features $ #{} :js-ffi
-        'reload! $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn reload! ()
-            if (nil? build-errors)
-              do (js/clearTimeout @*render-loop) (stop-auto!) (js/cancelAnimationFrame @*raq-loop) (render-loop! 0) (hud! |ok~ |Ok)
-              hud! |error build-errors
-          :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ []
-            :features $ #{} :js-ffi
-        'render-loop! $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn render-loop! (t)
+          :schema $ :: 'Fn $ {}
+            :args $ [] 'app.main/Tile 'Number
+            :return $ :: 'List 'quamolit.scene-ir/SceneNode
+        'travel-duration $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn travel-duration (tile)
             let
-                target $ js/document.querySelector |#app
-              ; js/console.log |store @*store
-              render-page (comp-container @*store) target dispatch!
-              reset! *render-loop $ js/setTimeout
-                fn () $ reset! *raq-loop $ js/requestAnimationFrame render-loop!
-                , 20
+                x $ abs $ - (:from-x tile) (:x tile)
+                y $ abs $ - (:from-y tile) (:y tile)
+              /
+                if (> x y) x y
+                , 8
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic
-            :features $ #{} :js-ffi
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ [] 'app.main/Tile
+        'x-at $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn x-at (tile time)
+            step-at (:from-x tile) (:x tile) (:start tile) 8 time
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ [] 'app.main/Tile 'Number
+        'y-at $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn y-at (tile time)
+            step-at (:from-y tile) (:y tile) (:start tile) 8 time
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ [] 'app.main/Tile 'Number
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.main
-          :require
-            app.comp.container :refer $ comp-container
-            quamolit.core :refer $ render-page configure-canvas setup-events
-            quamolit.util.time :refer $ get-tick
-            app.updater :refer $ updater
-            |./calcit.build-errors :default build-errors
-            |bottom-tip :default hud!
-            app.config :as config
-            app.auto :refer $ stop-auto!
-    'app.math $ %{} 'FileEntry
-      :defs $ {}
-        '*id-counter $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defatom *id-counter 1
-          :examples $ []
-          :schema $ :: 'Dynamic
-        'add-cell $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn add-cell (board)
-            let
-                existing-coords $ read-coords board
-                empty-coords $ difference schema/all-coords existing-coords
-                new-coord $ new-random-coord empty-coords
-              if (some? new-coord)
-                assoc board (get-id!)
-                  assoc schema/cell :x (first new-coord) :y $ last new-coord
-                , board
-          :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic
-        'blow-down $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn blow-down (board)
-            let
-                old-board $ purify-board board
-                fix-pos $ fn (x) (- 3 x)
-              merge & $ -> (range 4)
-                map $ fn (n)
-                  merge-down ({}) :y fix-pos true $ -> old-board (.to-list)
-                    filter $ limit-to :x n
-                    .sort-by $ by-pick :y true
-          :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic
-        'blow-left $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn blow-left (board)
-            let
-                old-board $ purify-board board
-                fix-pos $ fn (x) x
-              merge & $ -> (range 4)
-                map $ fn (n)
-                  merge-down ({}) :x fix-pos false $ -> old-board (.to-list)
-                    filter $ limit-to :y n
-                    .sort-by $ by-pick :x false
-          :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic
-        'blow-right $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn blow-right (board)
-            let
-                old-board $ purify-board board
-                fix-pos $ fn (x) (- 3 x)
-              merge & $ -> (range 4)
-                map $ fn (n)
-                  merge-down ({}) :x fix-pos true $ -> old-board (.to-list)
-                    filter $ limit-to :y n
-                    .sort-by $ by-pick :x true
-          :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic
-        'blow-up $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn blow-up (board)
-            let
-                old-board $ purify-board board
-                fix-pos $ fn (x) x
-              merge & $ -> (range 4)
-                map $ fn (n)
-                  merge-down ({}) :y fix-pos false $ -> old-board (.to-list)
-                    filter $ limit-to :x n
-                    .sort-by $ by-pick :y false
-          :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic
-        'by-pick $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn by-pick (path reverse?)
-            fn (entry)
-              if reverse?
-                - 0 $ get (last entry) path
-                + 0 $ get (last entry) path
-          :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic 'Dynamic
-        'get-id! $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn get-id! () (swap! *id-counter inc) @*id-counter
-          :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ []
-        'limit-to $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn limit-to (path n)
-            fn (entry)
-              = n $ get (last entry) path
-          :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic 'Dynamic
-        'merge-down $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn merge-down (acc path fix-pos reversed? line)
-            ; println |line: $ map line $ fn (entry)
-              :score $ val entry
-            case (count line) (0 acc)
-              1 $ let
-                  cursor $ first line
-                  cell-key $ first cursor
-                  cell $ last cursor
-                  pos $ count $ purify-board acc
-                assoc acc cell-key $ -> cell $ assoc path (fix-pos pos)
-              (count line)
-                let
-                    first-cursor $ first line
-                    first-key $ first first-cursor
-                    first-cell $ last first-cursor
-                    rest-line $ rest line
-                    second-cursor $ first rest-line
-                    second-key $ first second-cursor
-                    second-cell $ last second-cursor
-                    pos $ count $ purify-board acc
-                    matched? $ = (:score first-cell) (:score second-cell)
-                    next-acc $ if matched?
-                      assoc acc first-key
-                        -> first-cell (update :score inc)
-                          assoc path $ fix-pos pos
-                        , second-key $ -> second-cell $ assoc path (fix-pos pos) :dead? true
-                      assoc acc first-key $ -> first-cell $ assoc path (fix-pos pos)
-                  if matched?
-                    recur next-acc path fix-pos reversed? $ rest rest-line
-                    recur next-acc path fix-pos reversed? rest-line
-          :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic 'Dynamic 'Dynamic 'Dynamic 'Dynamic
-        'new-board $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn new-board ()
-            let
-                first-coord $ new-random-coord schema/all-coords
-                rest-coords $ difference schema/all-coords $ .to-set first-coord
-                second-coord $ new-random-coord rest-coords
-                first-id $ get-id!
-                second-id $ get-id!
-              {}
-                first-id $ assoc schema/cell :x (first first-coord) :y $ last first-coord
-                second-id $ assoc schema/cell :x (first second-coord) :y $ last second-coord
-          :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ []
-        'new-random-coord $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn new-random-coord (empty-coords)
-            let
-                n $ rand-int $ count empty-coords
-              get (.to-list empty-coords) n
-          :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic
-        'purify-board $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn purify-board (board)
-            -> board $ .filter $ fn (entry)
-              let
-                  cell $ last entry
-                not $ :dead? cell
-          :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic
-        'read-coords $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn read-coords (board)
-            -> board (.to-list)
-              map $ fn (entry)
-                let
-                    cell $ last entry
-                  [] (:x cell) (:y cell)
-              .to-set
-          :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic
-        'sum-scores $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn sum-scores (board)
-            reduce board 0 $ fn (acc entry)
-              let
-                  cell $ last entry
-                if (:dead? cell) acc $ + acc $ js/Math.pow 2 (:score cell)
-          :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic
-            :features $ #{} :js-ffi
-      :ns $ %{} 'NsEntry (:doc |)
-        :code $ quote $ ns app.math
-          :require (app.schema :as schema)
-            |@calcit/std :refer $ rand-int
-    'app.schema $ %{} 'FileEntry
-      :defs $ {}
-        'all-coords $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ def all-coords
-            -> (range 4)
-              mapcat $ fn (x)
-                -> (range 4)
-                  map $ fn (y) ([] x y)
-              .to-set
-          :examples $ []
-          :schema $ :: 'Dynamic
-        'cell $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ def cell
-            {} (:score 1) (:x 0) (:y 0) (:dead? false)
-          :examples $ []
-          :schema $ :: 'Dynamic
-      :ns $ %{} 'NsEntry (:doc |)
-        :code $ quote $ ns app.schema
-    'app.updater $ %{} 'FileEntry
-      :defs $ {} $ 'updater
-        %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn updater (store op op-data tick) (; js/console.log "|store update:" op op-data tick)
-            case-default op
-              do (js/console.log "|unknown op" op) store
-              :states $ update-states store op-data
-              :gc-states $ gc-states store op-data
-              :reset $ assoc store :board $ new-board
-              :up $ update store :board $ fn (board)
-                let
-                    merged-board $ blow-up board
-                  if
-                    not= (purify-board board) (purify-board merged-board)
-                    add-cell merged-board
-                    , merged-board
-              :down $ update store :board $ fn (board)
-                let
-                    merged-board $ blow-down board
-                  if
-                    not= (purify-board board) (purify-board merged-board)
-                    add-cell merged-board
-                    , merged-board
-              :left $ update store :board $ fn (board)
-                let
-                    merged-board $ blow-left board
-                  if
-                    not= (purify-board board) (purify-board merged-board)
-                    add-cell merged-board
-                    , merged-board
-              :right $ update store :board $ fn (board)
-                let
-                    merged-board $ blow-right board
-                  if
-                    not= (purify-board board) (purify-board merged-board)
-                    add-cell merged-board
-                    , merged-board
-          :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic 'Dynamic 'Dynamic 'Dynamic
-            :features $ #{} :js-ffi
-      :ns $ %{} 'NsEntry (:doc |)
-        :code $ quote $ ns app.updater
-          :require (app.schema :as schema)
-            app.math :refer $ new-board blow-up purify-board add-cell blow-left blow-right blow-down
-            quamolit.cursor :refer $ update-states gc-states
+          :require (quamolit.motion :as motion) (quamolit.scene-ir :as scene) (quamolit.canvas-scene :as renderer)
