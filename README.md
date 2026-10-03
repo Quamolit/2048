@@ -37,6 +37,10 @@ DPR 1/2 原生 Canvas 中间帧/完成帧比较。CI 安装 Chromium 后运行�
 另验证稳定/暂停时不重绘或重建画布，以及动画结束提交精确终帧。
 截图只输出到忽略的 `test-results/`，上传 Actions artifact，不入库。
 
+同仓库 PR 在 Actions 测试成功后发布到
+`https://repo.tiye.me/Quamolit/2048/pr/<PR编号>/`，入口在 Actions summary 和 PR 描述中。
+每个 PR 独立目录，不覆盖主站；外部 fork 仅测试，不使用部署密钥。
+
 ### 与原版的关系
 
 - 保留 4×4 棋盘、100px 卡片、120px 格距，位置以 8 格/秒运动，数值以 4 级/秒渐变。
