@@ -9,7 +9,8 @@
 
 需要 Calcit CLI **0.28.0**、caps、Node.js 24、Corepack。运行时
 `@calcit/procs` 同样固定为 **0.28.0**，Quamolit 源码模块固定到
-**0.0.18-alpha.2**。Yarn 使用 `node-modules` linker。
+性能修复候选提交 **676200f0cf938dc7665f94f4312a7535d618fefa**
+（[Quamolit PR #214](https://github.com/Quamolit/quamolit/pull/214)，合并并发布后再替换为新 alpha tag，未改写旧 tag）。Yarn 使用 `node-modules` linker。
 
 ```sh
 corepack enable
@@ -33,6 +34,7 @@ yarn test
 测试包含四向移动、一次合并限制、无效移动不产生新块、棋盘总值、结束状态、
 256 个棋盘/方向组合的独立数值参考、动画中途接续、真实生产页面操作和
 DPR 1/2 原生 Canvas 中间帧/完成帧比较。CI 安装 Chromium 后运行同一链路。
+另验证稳定/暂停时不重绘或重建画布，以及动画结束提交精确终帧。
 截图只输出到忽略的 `test-results/`，上传 Actions artifact，不入库。
 
 ### 与原版的关系
@@ -50,10 +52,22 @@ RAF、页面生命周期和测试时钟；不包含另一套游戏规则或框�
 编译产物集中于 `target/js/app/`，Vite 发布产物在 `dist/`，均不入库。
 当前是 Canvas 功能验证，不宣称 WebGPU 或性能发布验收完成。
 
+### 性能处理
+
+动画是否仍在进行由 Calcit `animation-active?` 判定。宿主只在模型变化、动画中、
+结束终帧、resize 或显式操作时绘制；画布尺寸实际变化才重设，状态 DOM 按变化更新。
+公共 Canvas 对完全不透明、无裁剪的组直接绘制；透明或裁剪组仍保持隔离合成。
+RAF 仍负责逻辑时钟与自动演示，不等于空闲时完全停止 RAF。
+
+桌面 Chromium 153、1280×720、DPR 2、seed=17 自动演示，预热 5 秒后采样 5 秒的
+首轮诊断：约 56.3→60 FPS，p99 帧间隔 66.8→17.7ms，离屏画布 2851→185。
+这不是跨设备性能保证或完整里程碑验收；没有减少移动、缩放、颜色或退出动画。
+
 ### English
 
 A working 2048 application defined in Calcit 0.28.0, consuming Quamolit's
-public Calcit source module at `0.0.18-alpha.2`. Rules, interruption-safe
+public Calcit source module pinned to the Canvas performance fix in PR #214
+(`676200f0cf938dc7665f94f4312a7535d618fefa`, pending a new alpha tag). Rules, interruption-safe
 animation sampling and scene generation live in Calcit; the JavaScript host
 handles browser lifecycle only. Full-page Canvas with floating controls.
 Run `yarn compile && yarn dev`; `yarn test` builds the production application

@@ -26,6 +26,23 @@
           :code $ quote $ defstruct Tile (:id 'Number) (:x 'Number) (:y 'Number) (:level 'Number) (:from-x 'Number) (:from-y 'Number) (:from-level 'Number) (:start 'Number) (:dead? 'Bool)
           :examples $ []
           :schema $ :: 'StructDef
+        'animation-active? $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn animation-active? (model time)
+            not $ every?
+              concat (:tiles model) (:ghosts model)
+              fn (tile)
+                if (:dead? tile)
+                  <= (exit-at tile time) 0
+                  let
+                      travel $ travel-duration tile
+                      changing $ /
+                        abs $ - (:level tile) (:from-level tile)
+                        , 4
+                      duration $ if (> travel changing) travel changing
+                    >= time $ + (:start tile) duration
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'Bool)
+            :args $ [] 'app.main/Game 'Number
         'board-nodes $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn board-nodes (width height)
             let

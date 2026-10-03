@@ -17,23 +17,47 @@ const status = document.querySelector("#status");
 const pauseButton = document.querySelector("#pause");
 const autoButton = document.querySelector("#auto");
 const listeners = new AbortController();
+let lastPaintedGame;
+let lastStatusGame;
+let lastClockTime = -1;
+let motionPending = false;
 
-function render() {
+function render(force = true) {
   const dpr = devicePixelRatio || 1;
-  canvas.width = Math.round(innerWidth * dpr);
-  canvas.height = Math.round(innerHeight * dpr);
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  app.draw_$x_(
-    context,
-    app.sample(game, time, innerWidth, innerHeight),
-    canvas.width,
-    canvas.height,
-    dpr,
-  );
-  status.textContent = `棋盘总值 ${app.board_total(game)} · 移动 ${to_js_data(game).moves}${app.game_over_$q_(game) ? " · 无可用移动" : ""}`;
-  pauseButton.textContent = paused ? "播放" : "暂停";
-  autoButton.textContent = automatic ? "停止自动" : "自动演示";
-  document.querySelector("#clock").textContent = `${time.toFixed(3)} s`;
+  const width = Math.round(innerWidth * dpr);
+  const height = Math.round(innerHeight * dpr);
+  const resized = canvas.width !== width || canvas.height !== height;
+  if (resized) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+  const active =
+    !paused && !document.hidden && app.animation_active_$q_(game, time);
+  if (force || resized || lastPaintedGame !== game || active || motionPending) {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    app.draw_$x_(
+      context,
+      app.sample(game, time, innerWidth, innerHeight),
+      canvas.width,
+      canvas.height,
+      dpr,
+    );
+    lastPaintedGame = game;
+    motionPending = active;
+  }
+  if (lastStatusGame !== game) {
+    status.textContent = `棋盘总值 ${app.board_total(game)} · 移动 ${to_js_data(game).moves}${app.game_over_$q_(game) ? " · 无可用移动" : ""}`;
+    lastStatusGame = game;
+  }
+  const pauseLabel = paused ? "播放" : "暂停";
+  const autoLabel = automatic ? "停止自动" : "自动演示";
+  if (pauseButton.textContent !== pauseLabel)
+    pauseButton.textContent = pauseLabel;
+  if (autoButton.textContent !== autoLabel) autoButton.textContent = autoLabel;
+  if (force || Math.abs(time - lastClockTime) >= 0.1) {
+    document.querySelector("#clock").textContent = `${time.toFixed(3)} s`;
+    lastClockTime = time;
+  }
 }
 
 function move(direction) {
@@ -57,7 +81,7 @@ function frame(stamp) {
     }
   }
   lastFrame = stamp;
-  render();
+  render(false);
   animationFrame = requestAnimationFrame(frame);
 }
 

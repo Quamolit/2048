@@ -9,6 +9,59 @@ const tags = init_tags(["tiles", "ghosts"]);
 const board = (row) =>
   app.from_levels(arrayToList([...row, ...Array(16 - row.length).fill(0)]), 17);
 
+test("动画活动判定覆盖入场、移动和退出的终点", () => {
+  expect(app.animation_active_$q_(app.initial(17), 0.125)).toBe(true);
+  expect(app.animation_active_$q_(app.initial(17), 0.25)).toBe(false);
+  const merged = app.move(board([1, 1]), 1, 3);
+  expect(app.animation_active_$q_(merged, 1.125)).toBe(true);
+  expect(app.animation_active_$q_(merged, 2)).toBe(false);
+});
+
+test("稳定与暂停页面不重绘或重建画布，活动结束提交精确终帧", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.paintCounts = { clear: 0, resize: 0 };
+    const clear = CanvasRenderingContext2D.prototype.clearRect;
+    CanvasRenderingContext2D.prototype.clearRect = function (...args) {
+      window.paintCounts.clear++;
+      return clear.apply(this, args);
+    };
+    for (const key of ["width", "height"]) {
+      const property = Object.getOwnPropertyDescriptor(
+        HTMLCanvasElement.prototype,
+        key,
+      );
+      Object.defineProperty(HTMLCanvasElement.prototype, key, {
+        ...property,
+        set(value) {
+          window.paintCounts.resize++;
+          property.set.call(this, value);
+        },
+      });
+    }
+  });
+  await page.goto("/?seed=17");
+  await expect
+    .poll(
+      async () => (await page.evaluate(() => window.game2048.snapshot())).time,
+    )
+    .toBeGreaterThan(0.4);
+  const finalFrame = await page
+    .locator("canvas")
+    .evaluate((canvas) => canvas.toDataURL());
+  const before = await page.evaluate(() => ({ ...window.paintCounts }));
+  await page.waitForTimeout(250);
+  expect(await page.evaluate(() => window.paintCounts)).toEqual(before);
+  await page.evaluate(() => window.game2048.seek(1));
+  expect(
+    await page.locator("canvas").evaluate((canvas) => canvas.toDataURL()),
+  ).toBe(finalFrame);
+  const paused = await page.evaluate(() => ({ ...window.paintCounts }));
+  await page.waitForTimeout(250);
+  expect(await page.evaluate(() => window.paintCounts)).toEqual(paused);
+});
+
 test("四向合并、一次合并限制、无效移动与棋盘总值", () => {
   for (const direction of [0, 1, 2, 3]) {
     const cells = Array(16).fill(0);
