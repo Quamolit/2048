@@ -41,6 +41,15 @@ DPR 1/2 原生 Canvas 中间帧/完成帧比较。CI 安装 Chromium 后运行�
 `https://repo.tiye.me/Quamolit/2048/pr/<PR编号>/`，入口在 Actions summary 和 PR 描述中。
 每个 PR 独立目录，不覆盖主站；外部 fork 仅测试，不使用部署密钥。
 
+前端资源上传到 COS，使用正式 `cos-upload-action@v1.2.0` 的内置
+`public-base-url` 逐文件校验，不增加上传验证脚本。PR CDN 前缀为
+`Quamolit/2048/pr/<PR编号>/<run>/<attempt>/`，原预览入口保持不变。
+游戏生产构建先按原链路完成浏览器回归，再从同一源码构建 CDN 资源；只有
+同仓库 PR 或原手动部署事件上传，main push 仍只检查 / 构建。
+手动生产部署保留 `Quamolit/2048/` 资源前缀与原 web-assets 路径，HTML 在
+COS 校验成功后上传。部署队列不取消进行中的上传，不扩大到服务端产物。
+仓库需配置 `COS_BUCKET`、`COS_SECRET_ID`、`COS_SECRET_KEY`，fork PR 不使用这些密钥。
+
 ### 与原版的关系
 
 - 保留 4×4 棋盘、100px 卡片、120px 格距，位置以 8 格/秒运动，数值以 4 级/秒渐变。
