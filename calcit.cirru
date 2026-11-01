@@ -12,20 +12,20 @@
       :defs $ {}
         'Game $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defstruct Game (:seed 'Number) (:next-id 'Number) (:moves 'Number) (:event-time 'Number)
-            :tiles $ :: 'List 'app.main/Tile
-            :ghosts $ :: 'List 'app.main/Tile
+            :tiles $ quote $ List app.main/Tile
+            :ghosts $ quote $ List app.main/Tile
           :examples $ []
-          :schema $ :: 'StructDef
+          :schema $ quote StructDef
         'Slide $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defstruct Slide
-            :tiles $ :: 'List 'app.main/Tile
-            :ghosts $ :: 'List 'app.main/Tile
+            :tiles $ quote $ List app.main/Tile
+            :ghosts $ quote $ List app.main/Tile
           :examples $ []
-          :schema $ :: 'StructDef
+          :schema $ quote StructDef
         'Tile $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defstruct Tile (:id 'Number) (:x 'Number) (:y 'Number) (:level 'Number) (:from-x 'Number) (:from-y 'Number) (:from-level 'Number) (:start 'Number) (:dead? 'Bool)
           :examples $ []
-          :schema $ :: 'StructDef
+          :schema $ quote StructDef
         'animation-active? $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn animation-active? (model time)
             not $ every?
@@ -41,8 +41,7 @@
                       duration $ if (> travel changing) travel changing
                     >= time $ + (:start tile) duration
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Bool)
-            :args $ [] 'app.main/Game 'Number
+          :schema $ quote $ Fn app.main/Game Number (-> Bool)
         'board-nodes $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn board-nodes (width height)
             let
@@ -56,16 +55,14 @@
                 backdrop $ rect-node |board-background |board -250 -250 500 500 $ color 29 0.17 0.68 1
               [] root backdrop
           :examples $ []
-          :schema $ :: 'Fn $ {}
-            :args $ [] 'Number 'Number
-            :return $ :: 'List 'quamolit.scene-ir/SceneNode
+          :schema $ quote $ Fn Number Number
+            -> $ List quamolit.scene-ir/SceneNode
         'board-total $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn board-total (model)
             foldl (:tiles model) 0 $ fn (total tile)
               + total $ pow 2 $ :level tile
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Number)
-            :args $ [] 'app.main/Game
+          :schema $ quote $ Fn app.main/Game (-> Number)
         'cell-at $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn cell-at (tiles x y)
             find tiles $ fn (tile)
@@ -73,15 +70,13 @@
                 = (:x tile) x
                 = (:y tile) y
           :examples $ []
-          :schema $ :: 'Fn $ {}
-            :args $ [] (:: 'List 'app.main/Tile) 'Number 'Number
-            :return $ :: 'Option 'app.main/Tile
+          :schema $ quote $ Fn (List app.main/Tile) Number Number
+            -> $ Option app.main/Tile
         'clamp $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn clamp (value low high)
             if (< value low) low $ if (> value high) high value
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Number)
-            :args $ [] 'Number 'Number 'Number
+          :schema $ quote $ Fn Number Number Number (-> Number)
         'collect-line $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn collect-line (tiles direction line slot collected)
             if (= slot 4) collected $ let
@@ -93,9 +88,8 @@
                 (:some tile)
                   recur tiles direction line (inc slot) (conj collected tile)
           :examples $ []
-          :schema $ :: 'Fn $ {}
-            :args $ [] (:: 'List 'app.main/Tile) 'Number 'Number 'Number $ :: 'List 'app.main/Tile
-            :return $ :: 'List 'app.main/Tile
+          :schema $ quote $ Fn (List app.main/Tile) Number Number Number (List app.main/Tile)
+            -> $ List app.main/Tile
         'color $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn color (h s l a)
             let
@@ -103,8 +97,7 @@
                 lightness $ clamp l 0 1
               motion/ColorRgba :r (hsl-channel h saturation lightness 0) :g (hsl-channel h saturation lightness 8) :b (hsl-channel h saturation lightness 4) :a a
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'quamolit.motion/ColorRgba)
-            :args $ [] 'Number 'Number 'Number 'Number
+          :schema $ quote $ Fn Number Number Number Number (-> quamolit.motion/ColorRgba)
         'coordinate $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn coordinate (direction line slot)
             case direction
@@ -113,8 +106,7 @@
               2 $ motion/Vec2 :x line :y $ - 3 slot
               3 $ motion/Vec2 :x slot :y line
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'quamolit.motion/Vec2)
-            :args $ [] 'Number 'Number 'Number
+          :schema $ quote $ Fn Number Number Number (-> quamolit.motion/Vec2)
         'draw! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn draw! (context document width height dpr)
             let
@@ -132,9 +124,7 @@
                 scene/SceneDocument :nodes $ concat ([] root) children
                 , width height no-image
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Unit)
-            :args $ [] 'js-ffi.canvas-batches/CanvasContextHost 'quamolit.scene-ir/SceneDocument 'Number 'Number 'Number
-            :features $ #{} :js-ffi
+          :schema $ quote $ Fn js-ffi.canvas-batches/CanvasContextHost quamolit.scene-ir/SceneDocument Number Number Number (-> Unit) (:features :js-ffi)
         'exit-at $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn exit-at (tile time)
             if (:dead? tile)
@@ -143,22 +133,21 @@
                 , 4 time
               , 1
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Number)
-            :args $ [] 'app.main/Tile 'Number
+          :schema $ quote $ Fn app.main/Tile Number (-> Number)
         'flatten-nodes $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn flatten-nodes (lists)
-            list-match lists
-              () $ []
-              (head tail)
+            match (destruct-list lists)
+              (:none) ([])
+              (:some head tail)
                 concat head $ flatten-nodes tail
           :examples $ []
-          :schema $ :: 'Fn $ {}
-            :args $ [] $ :: 'List (:: 'List 'quamolit.scene-ir/SceneNode)
-            :return $ :: 'List 'quamolit.scene-ir/SceneNode
+          :schema $ quote $ Fn
+            List $ List quamolit.scene-ir/SceneNode
+            -> $ List quamolit.scene-ir/SceneNode
         'from-levels $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn from-levels (levels seed)
             assert |invalid-board-levels $ and
-              = (count levels) 16
+              = (.len levels) 16
               every? levels $ fn (level)
                 and (motion/finite-number? level) (>= level 0)
                   = level $ floor level
@@ -172,21 +161,19 @@
               fn (tile)
                 > (:level tile) 0
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'app.main/Game)
-            :args $ [] (:: 'List 'Number) 'Number
+          :schema $ quote $ Fn (List Number) Number (-> app.main/Game)
         'game-over? $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn game-over? (model)
             and
               =
-                count $ :tiles model
+                .len $ :tiles model
                 , 16
               every? (range 4)
                 fn (direction)
                   same-board? (:tiles model)
                     :tiles $ slide model (:event-time model) direction
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Bool)
-            :args $ [] 'app.main/Game
+          :schema $ quote $ Fn app.main/Game (-> Bool)
         'hsl-channel $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn hsl-channel (h s l offset)
             let
@@ -201,8 +188,7 @@
                 high $ if (> low -1) low -1
               - l $ * a $ if (< high 1) high 1
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Number)
-            :args $ [] 'Number 'Number 'Number 'Number
+          :schema $ quote $ Fn Number Number Number Number (-> Number)
         'initial $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn initial (seed)
             spawn
@@ -214,14 +200,12 @@
                 , 0
               , 0
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'app.main/Game)
-            :args $ [] 'Number
+          :schema $ quote $ Fn Number (-> app.main/Game)
         'level-at $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn level-at (tile time)
             step-at (:from-level tile) (:level tile) (:start tile) 4 time
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Number)
-            :args $ [] 'app.main/Tile 'Number
+          :schema $ quote $ Fn app.main/Tile Number (-> Number)
         'levels $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn levels (model)
             map (range 16)
@@ -232,29 +216,27 @@
                   (:none) 0
                   (:some tile) (:level tile)
           :examples $ []
-          :schema $ :: 'Fn $ {}
-            :args $ [] 'app.main/Game
-            :return $ :: 'List 'Number
+          :schema $ quote $ Fn app.main/Game
+            -> $ List Number
         'main! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn main! ()
-            assert |invalid-game-initial $ = 2 $ count
+            assert |invalid-game-initial $ = 2 $ .len
               :tiles $ initial 17
             assert |invalid-game-scene $ >
-              count $ :nodes $ sample (initial 17) 0.125 1000 700
+              .len $ :nodes $ sample (initial 17) 0.125 1000 700
               , 18
             , &unit
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Unit)
-            :args $ []
+          :schema $ quote $ Fn (-> Unit)
         'merge-line $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn merge-line (tiles direction line slot time result)
-            list-match tiles
-              () result
-              (tile tail)
+            match (destruct-list tiles)
+              (:none) result
+              (:some tile tail)
                 let
                     position $ coordinate direction line slot
                     merge? $ and
-                      > (count tail) 0
+                      > (.len tail) 0
                       = (:level tile)
                         :level $ &list:nth tail 0
                     level $ if merge?
@@ -270,8 +252,7 @@
                     if merge? (rest tail) tail
                     , direction line (inc slot) time combined
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'app.main/Slide)
-            :args $ [] (:: 'List 'app.main/Tile) 'Number 'Number 'Number 'Number 'app.main/Slide
+          :schema $ quote $ Fn (List app.main/Tile) Number Number Number Number app.main/Slide (-> app.main/Slide)
         'move $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn move (model time direction)
             let
@@ -289,42 +270,35 @@
                       :ghosts result
                   , time
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'app.main/Game)
-            :args $ [] 'app.main/Game 'Number 'Number
+          :schema $ quote $ Fn app.main/Game Number Number (-> app.main/Game)
         'new-tile $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn new-tile (id x y level time)
             Tile :id id :x x :y y :level level :from-x x :from-y y :from-level 0 :start time :dead? false
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'app.main/Tile)
-            :args $ [] 'Number 'Number 'Number 'Number 'Number
+          :schema $ quote $ Fn Number Number Number Number Number (-> app.main/Tile)
         'next-seed $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn next-seed (seed)
             remainder (* seed 48271) 2147483647
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Number)
-            :args $ [] 'Number
+          :schema $ quote $ Fn Number (-> Number)
         'no-image $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn no-image (id version) (raise |game-has-no-images)
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'js-ffi.browser/ImageHost)
-            :args $ [] 'String 'Number
+          :schema $ quote $ Fn String Number (-> js-ffi.browser/ImageHost)
         'rect-node $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn rect-node (id parent x y width height fill)
             scene/SceneNode :id id :key id :parent parent :bindings ([]) :interaction (scene/SceneInteraction :none) :content $ scene/SceneContent :rect $ scene/RectNode :x x :y y :width width :height height :fill fill
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'quamolit.scene-ir/SceneNode)
-            :args $ [] 'String 'String 'Number 'Number 'Number 'Number 'quamolit.motion/ColorRgba
+          :schema $ quote $ Fn String String Number Number Number Number quamolit.motion/ColorRgba (-> quamolit.scene-ir/SceneNode)
         'reload! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn reload! () &unit
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Unit)
-            :args $ []
+          :schema $ quote $ Fn (-> Unit)
         'remainder $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn remainder (value divisor)
             - value $ * divisor $ floor (/ value divisor)
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Number)
-            :args $ [] 'Number 'Number
+          :schema $ quote $ Fn Number Number (-> Number)
         'reset $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn reset (model time)
             assert |invalid-game-event $ and (motion/finite-number? time)
@@ -344,8 +318,7 @@
                           , true time
               spawn (spawn base time) time
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'app.main/Game)
-            :args $ [] 'app.main/Game 'Number
+          :schema $ quote $ Fn app.main/Game Number (-> app.main/Game)
         'retarget $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn retarget (tile position level dead? time)
             struct-with tile
@@ -358,12 +331,11 @@
               :from-y $ y-at tile time
               :from-level $ level-at tile time
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'app.main/Tile)
-            :args $ [] 'app.main/Tile 'quamolit.motion/Vec2 'Number 'Bool 'Number
+          :schema $ quote $ Fn app.main/Tile quamolit.motion/Vec2 Number Bool Number (-> app.main/Tile)
         'same-board? $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn same-board? (before after)
             and
-              = (count before) (count after)
+              = (.len before) (.len after)
               every? before $ fn (tile)
                 match
                   find after $ fn (other)
@@ -375,8 +347,7 @@
                       = (:y tile) (:y other)
                       = (:level tile) (:level other)
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Bool)
-            :args $ [] (:: 'List 'app.main/Tile) (:: 'List 'app.main/Tile)
+          :schema $ quote $ Fn (List app.main/Tile) (List app.main/Tile) (-> Bool)
         'sample $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn sample (model time width height)
             assert |invalid-game-time $ and (motion/finite-number? time) (>= time 0)
@@ -401,8 +372,7 @@
                   fn (tile) (tile-nodes tile time)
               scene/SceneDocument :nodes $ concat (board-nodes width height) slots tiles
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'quamolit.scene-ir/SceneDocument)
-            :args $ [] 'app.main/Game 'Number 'Number 'Number
+          :schema $ quote $ Fn app.main/Game Number Number Number (-> quamolit.scene-ir/SceneDocument)
         'scale-at $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn scale-at (tile time)
             let
@@ -413,8 +383,7 @@
                   , 1.1 1
               * growing $ exit-at tile time
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Number)
-            :args $ [] 'app.main/Tile 'Number
+          :schema $ quote $ Fn app.main/Tile Number (-> Number)
         'slide $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn slide (model time direction)
             assert |invalid-direction $ and
@@ -425,16 +394,14 @@
               >= time $ :event-time model
             slide-lines model direction 0 time $ Slide :tiles ([]) :ghosts $ []
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'app.main/Slide)
-            :args $ [] 'app.main/Game 'Number 'Number
+          :schema $ quote $ Fn app.main/Game Number Number (-> app.main/Slide)
         'slide-lines $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn slide-lines (model direction line time result)
             if (= line 4) result $ let
-                tiles $ collect-line (:tiles model) direction line 0 $ slice (:tiles model) 0 0
+                tiles $ collect-line (:tiles model) direction line 0 $ slice (:tiles model) 0 (Option :some 0)
               recur model direction (inc line) time $ merge-line tiles direction line 0 time result
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'app.main/Slide)
-            :args $ [] 'app.main/Game 'Number 'Number 'Number 'app.main/Slide
+          :schema $ quote $ Fn app.main/Game Number Number Number app.main/Slide (-> app.main/Slide)
         'spawn $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn spawn (model time)
             let
@@ -448,7 +415,7 @@
               if (empty? vacancies) model $ let
                   seed $ next-seed $ :seed model
                   slot $ &list:nth vacancies $ floor
-                    * (count vacancies) (/ seed 2147483647)
+                    * (.len vacancies) (/ seed 2147483647)
                   tile $ new-tile (:next-id model) (remainder slot 4)
                     floor $ / slot 4
                     , 1 time
@@ -456,8 +423,7 @@
                   :next-id $ inc $ :next-id model
                   :tiles $ conj (:tiles model) tile
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'app.main/Game)
-            :args $ [] 'app.main/Game 'Number
+          :schema $ quote $ Fn app.main/Game Number (-> app.main/Game)
         'step-at $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn step-at (from target start speed time)
             let
@@ -466,8 +432,7 @@
                 clamp (+ from distance) from target
                 clamp (- from distance) target from
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Number)
-            :args $ [] 'Number 'Number 'Number 'Number 'Number
+          :schema $ quote $ Fn Number Number Number Number Number (-> Number)
         'tile-color $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn tile-color (value)
             color
@@ -476,13 +441,11 @@
               + 0.94 $ * (- value 1) -0.044
               , 1
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'quamolit.motion/ColorRgba)
-            :args $ [] 'Number
+          :schema $ quote $ Fn Number (-> quamolit.motion/ColorRgba)
         'tile-level $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn tile-level (tile) (:level tile)
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Number)
-            :args $ [] 'app.main/Tile
+          :schema $ quote $ Fn app.main/Tile (-> Number)
         'tile-nodes $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn tile-nodes (tile time)
             let
@@ -504,15 +467,14 @@
                 background $ rect-node (str id |/background) id -50 -50 100 100 $ tile-color value
                 text $ scene/SceneNode :id (str id |/label) :key (str id |/label) :parent id :bindings ([]) :interaction (scene/SceneInteraction :none) :content $ scene/SceneContent :text
                   scene/TextNode :x
-                    * -12 $ count label
+                    * -12 $ .len label
                     , :y 0 :size 40 :text label :fill
                       if (> value 2) (color 0 0 1 1) (color 0 0 0.5 1)
                       , :font $ scene/FontSpec :family | :fallback (scene/FontFallback :monospace) :version 0
               [] root background text
           :examples $ []
-          :schema $ :: 'Fn $ {}
-            :args $ [] 'app.main/Tile 'Number
-            :return $ :: 'List 'quamolit.scene-ir/SceneNode
+          :schema $ quote $ Fn app.main/Tile Number
+            -> $ List quamolit.scene-ir/SceneNode
         'travel-duration $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn travel-duration (tile)
             let
@@ -522,20 +484,17 @@
                 if (> x y) x y
                 , 8
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Number)
-            :args $ [] 'app.main/Tile
+          :schema $ quote $ Fn app.main/Tile (-> Number)
         'x-at $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn x-at (tile time)
             step-at (:from-x tile) (:x tile) (:start tile) 8 time
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Number)
-            :args $ [] 'app.main/Tile 'Number
+          :schema $ quote $ Fn app.main/Tile Number (-> Number)
         'y-at $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn y-at (tile time)
             step-at (:from-y tile) (:y tile) (:start tile) 8 time
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Number)
-            :args $ [] 'app.main/Tile 'Number
+          :schema $ quote $ Fn app.main/Tile Number (-> Number)
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.main
           :require (quamolit.motion :as motion) (quamolit.scene-ir :as scene) (quamolit.canvas-scene :as renderer)
