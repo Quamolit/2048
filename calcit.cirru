@@ -11,7 +11,7 @@
     %{} 'FileEntry
       :defs $ {}
         'Game $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defstruct Game (:seed 'Number) (:next-id 'Number) (:moves 'Number) (:event-time 'Number)
+          :code $ quote $ defstruct Game (:seed Number) (:next-id Number) (:moves Number) (:event-time Number)
             :tiles $ quote $ List app.main/Tile
             :ghosts $ quote $ List app.main/Tile
           :examples $ []
@@ -23,7 +23,7 @@
           :examples $ []
           :schema $ quote StructDef
         'Tile $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defstruct Tile (:id 'Number) (:x 'Number) (:y 'Number) (:level 'Number) (:from-x 'Number) (:from-y 'Number) (:from-level 'Number) (:start 'Number) (:dead? 'Bool)
+          :code $ quote $ defstruct Tile (:id Number) (:x Number) (:y Number) (:level Number) (:from-x Number) (:from-y Number) (:from-level Number) (:start Number) (:dead? Bool)
           :examples $ []
           :schema $ quote StructDef
         'animation-active? $ %{} 'CodeEntry (:doc |)
