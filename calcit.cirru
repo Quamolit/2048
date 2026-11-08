@@ -12,14 +12,14 @@
       :defs $ {}
         'Game $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defstruct Game (:seed Number) (:next-id Number) (:moves Number) (:event-time Number)
-            :tiles $ quote $ List app.main/Tile
-            :ghosts $ quote $ List app.main/Tile
+            :tiles $ List app.main/Tile
+            :ghosts $ List app.main/Tile
           :examples $ []
           :schema $ quote StructDef
         'Slide $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defstruct Slide
-            :tiles $ quote $ List app.main/Tile
-            :ghosts $ quote $ List app.main/Tile
+            :tiles $ List app.main/Tile
+            :ghosts $ List app.main/Tile
           :examples $ []
           :schema $ quote StructDef
         'Tile $ %{} 'CodeEntry (:doc |)

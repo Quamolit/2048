@@ -7,10 +7,9 @@
 
 ### 运行与验证
 
-需要 Calcit CLI **0.34.3**、caps、Node.js 24、Corepack。运行时
-`@calcit/procs` 同样固定为 **0.34.3**，Quamolit 源码模块固定到
-已发布源码模块 **0.0.19**
-（[tag](https://github.com/Quamolit/quamolit/tree/0.0.19)，Calcit 0.34.3，包含既有 Canvas 性能修复）。Yarn 使用 `node-modules` linker。
+需要 Calcit CLI **0.38.0**、caps、Node.js 24、Corepack。运行时
+`@calcit/procs` 同样固定为 **0.38.0**，Quamolit 源码模块固定到 **0.0.20**
+（[tag](https://github.com/Quamolit/quamolit/tree/0.0.20)，配对 Calcit 0.38.0）。Yarn 使用 `node-modules` linker。
 
 ```sh
 corepack enable
@@ -41,7 +40,7 @@ DPR 1/2 原生 Canvas 中间帧/完成帧比较。CI 安装 Chromium 后运行�
 `https://repo.tiye.me/Quamolit/2048/pr/<PR编号>/`，入口在 Actions summary 和 PR 描述中。
 每个 PR 独立目录，不覆盖主站；外部 fork 仅测试，不使用部署密钥。
 
-前端资源上传到 COS，使用正式 `cos-upload-action@v1.2.0` 的内置
+前端资源上传到 COS，使用正式 `cos-upload-action@v1.3.0` 的内置
 `public-base-url` 逐文件校验，不增加上传验证脚本。PR CDN 前缀为
 `Quamolit/2048/pr/<PR编号>/<run>/<attempt>/`，原预览入口保持不变。
 游戏生产构建先按原链路完成浏览器回归，再从同一源码构建 CDN 资源；只有
@@ -79,8 +78,8 @@ RAF 仍负责逻辑时钟与自动演示，不等于空闲时完全停止 RAF。
 
 ### English
 
-A working 2048 application defined in Calcit 0.34.3, consuming Quamolit's
-public Calcit source module at `0.0.19`, including the Canvas
+A working 2048 application defined in Calcit 0.38.0, consuming Quamolit's
+public Calcit source module at `0.0.20`, including the Canvas
 performance fix in PR #214. Rules, interruption-safe
 animation sampling and scene generation live in Calcit; the JavaScript host
 handles browser lifecycle only. Full-page Canvas with floating controls.
