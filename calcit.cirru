@@ -41,7 +41,7 @@
                       duration $ if (> travel changing) travel changing
                     >= time $ + (:start tile) duration
           :examples $ []
-          :schema $ quote $ Fn app.main/Game Number (-> Bool)
+          :schema $ quote $ Fn Game Number (-> Bool)
         'board-nodes $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn board-nodes (width height)
             let
@@ -56,13 +56,13 @@
               [] root backdrop
           :examples $ []
           :schema $ quote $ Fn Number Number
-            -> $ List quamolit.scene-ir/SceneNode
+            -> $ List scene/SceneNode
         'board-total $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn board-total (model)
             foldl (:tiles model) 0 $ fn (total tile)
               + total $ pow 2 $ :level tile
           :examples $ []
-          :schema $ quote $ Fn app.main/Game (-> Number)
+          :schema $ quote $ Fn Game (-> Number)
         'cell-at $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn cell-at (tiles x y)
             find tiles $ fn (tile)
@@ -70,8 +70,8 @@
                 = (:x tile) x
                 = (:y tile) y
           :examples $ []
-          :schema $ quote $ Fn (List app.main/Tile) Number Number
-            -> $ Option app.main/Tile
+          :schema $ quote $ Fn (List Tile) Number Number
+            -> $ Option Tile
         'clamp $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn clamp (value low high)
             if (< value low) low $ if (> value high) high value
@@ -88,8 +88,8 @@
                 (:some tile)
                   recur tiles direction line (inc slot) (conj collected tile)
           :examples $ []
-          :schema $ quote $ Fn (List app.main/Tile) Number Number Number (List app.main/Tile)
-            -> $ List app.main/Tile
+          :schema $ quote $ Fn (List Tile) Number Number Number (List Tile)
+            -> $ List Tile
         'color $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn color (h s l a)
             let
@@ -97,7 +97,7 @@
                 lightness $ clamp l 0 1
               motion/ColorRgba :r (hsl-channel h saturation lightness 0) :g (hsl-channel h saturation lightness 8) :b (hsl-channel h saturation lightness 4) :a a
           :examples $ []
-          :schema $ quote $ Fn Number Number Number Number (-> quamolit.motion/ColorRgba)
+          :schema $ quote $ Fn Number Number Number Number (-> motion/ColorRgba)
         'coordinate $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn coordinate (direction line slot)
             case direction
@@ -106,7 +106,7 @@
               2 $ motion/Vec2 :x line :y $ - 3 slot
               3 $ motion/Vec2 :x slot :y line
           :examples $ []
-          :schema $ quote $ Fn Number Number Number (-> quamolit.motion/Vec2)
+          :schema $ quote $ Fn Number Number Number (-> motion/Vec2)
         'draw! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn draw! (context document width height dpr)
             let
@@ -124,7 +124,7 @@
                 scene/SceneDocument :nodes $ concat ([] root) children
                 , width height no-image
           :examples $ []
-          :schema $ quote $ Fn js-ffi.canvas-batches/CanvasContextHost quamolit.scene-ir/SceneDocument Number Number Number (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn js-ffi.canvas-batches/CanvasContextHost scene/SceneDocument Number Number Number (-> Unit) (:features :js-ffi)
         'exit-at $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn exit-at (tile time)
             if (:dead? tile)
@@ -133,7 +133,7 @@
                 , 4 time
               , 1
           :examples $ []
-          :schema $ quote $ Fn app.main/Tile Number (-> Number)
+          :schema $ quote $ Fn Tile Number (-> Number)
         'flatten-nodes $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn flatten-nodes (lists)
             match (destruct-list lists)
@@ -142,8 +142,8 @@
                 concat head $ flatten-nodes tail
           :examples $ []
           :schema $ quote $ Fn
-            List $ List quamolit.scene-ir/SceneNode
-            -> $ List quamolit.scene-ir/SceneNode
+            List $ List scene/SceneNode
+            -> $ List scene/SceneNode
         'from-levels $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn from-levels (levels seed)
             assert |invalid-board-levels $ and
@@ -161,7 +161,7 @@
               fn (tile)
                 > (:level tile) 0
           :examples $ []
-          :schema $ quote $ Fn (List Number) Number (-> app.main/Game)
+          :schema $ quote $ Fn (List Number) Number (-> Game)
         'game-over? $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn game-over? (model)
             and
@@ -173,7 +173,7 @@
                   same-board? (:tiles model)
                     :tiles $ slide model (:event-time model) direction
           :examples $ []
-          :schema $ quote $ Fn app.main/Game (-> Bool)
+          :schema $ quote $ Fn Game (-> Bool)
         'hsl-channel $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn hsl-channel (h s l offset)
             let
@@ -200,12 +200,12 @@
                 , 0
               , 0
           :examples $ []
-          :schema $ quote $ Fn Number (-> app.main/Game)
+          :schema $ quote $ Fn Number (-> Game)
         'level-at $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn level-at (tile time)
             step-at (:from-level tile) (:level tile) (:start tile) 4 time
           :examples $ []
-          :schema $ quote $ Fn app.main/Tile Number (-> Number)
+          :schema $ quote $ Fn Tile Number (-> Number)
         'levels $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn levels (model)
             map (range 16)
@@ -216,7 +216,7 @@
                   (:none) 0
                   (:some tile) (:level tile)
           :examples $ []
-          :schema $ quote $ Fn app.main/Game
+          :schema $ quote $ Fn Game
             -> $ List Number
         'main! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn main! ()
@@ -252,7 +252,7 @@
                     if merge? (rest tail) tail
                     , direction line (inc slot) time combined
           :examples $ []
-          :schema $ quote $ Fn (List app.main/Tile) Number Number Number Number app.main/Slide (-> app.main/Slide)
+          :schema $ quote $ Fn (List Tile) Number Number Number Number Slide (-> Slide)
         'move $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn move (model time direction)
             let
@@ -270,12 +270,12 @@
                       :ghosts result
                   , time
           :examples $ []
-          :schema $ quote $ Fn app.main/Game Number Number (-> app.main/Game)
+          :schema $ quote $ Fn Game Number Number (-> Game)
         'new-tile $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn new-tile (id x y level time)
             Tile :id id :x x :y y :level level :from-x x :from-y y :from-level 0 :start time :dead? false
           :examples $ []
-          :schema $ quote $ Fn Number Number Number Number Number (-> app.main/Tile)
+          :schema $ quote $ Fn Number Number Number Number Number (-> Tile)
         'next-seed $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn next-seed (seed)
             remainder (* seed 48271) 2147483647
@@ -289,7 +289,7 @@
           :code $ quote $ defn rect-node (id parent x y width height fill)
             scene/SceneNode :id id :key id :parent parent :bindings ([]) :interaction (scene/SceneInteraction :none) :content $ scene/SceneContent :rect $ scene/RectNode :x x :y y :width width :height height :fill fill
           :examples $ []
-          :schema $ quote $ Fn String String Number Number Number Number quamolit.motion/ColorRgba (-> quamolit.scene-ir/SceneNode)
+          :schema $ quote $ Fn String String Number Number Number Number motion/ColorRgba (-> scene/SceneNode)
         'reload! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn reload! () &unit
           :examples $ []
@@ -318,7 +318,7 @@
                           , true time
               spawn (spawn base time) time
           :examples $ []
-          :schema $ quote $ Fn app.main/Game Number (-> app.main/Game)
+          :schema $ quote $ Fn Game Number (-> Game)
         'retarget $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn retarget (tile position level dead? time)
             struct-with tile
@@ -331,7 +331,7 @@
               :from-y $ y-at tile time
               :from-level $ level-at tile time
           :examples $ []
-          :schema $ quote $ Fn app.main/Tile quamolit.motion/Vec2 Number Bool Number (-> app.main/Tile)
+          :schema $ quote $ Fn Tile motion/Vec2 Number Bool Number (-> Tile)
         'same-board? $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn same-board? (before after)
             and
@@ -347,7 +347,7 @@
                       = (:y tile) (:y other)
                       = (:level tile) (:level other)
           :examples $ []
-          :schema $ quote $ Fn (List app.main/Tile) (List app.main/Tile) (-> Bool)
+          :schema $ quote $ Fn (List Tile) (List Tile) (-> Bool)
         'sample $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn sample (model time width height)
             assert |invalid-game-time $ and (motion/finite-number? time) (>= time 0)
@@ -372,7 +372,7 @@
                   fn (tile) (tile-nodes tile time)
               scene/SceneDocument :nodes $ concat (board-nodes width height) slots tiles
           :examples $ []
-          :schema $ quote $ Fn app.main/Game Number Number Number (-> quamolit.scene-ir/SceneDocument)
+          :schema $ quote $ Fn Game Number Number Number (-> scene/SceneDocument)
         'scale-at $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn scale-at (tile time)
             let
@@ -383,7 +383,7 @@
                   , 1.1 1
               * growing $ exit-at tile time
           :examples $ []
-          :schema $ quote $ Fn app.main/Tile Number (-> Number)
+          :schema $ quote $ Fn Tile Number (-> Number)
         'slide $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn slide (model time direction)
             assert |invalid-direction $ and
@@ -394,14 +394,14 @@
               >= time $ :event-time model
             slide-lines model direction 0 time $ Slide :tiles ([]) :ghosts $ []
           :examples $ []
-          :schema $ quote $ Fn app.main/Game Number Number (-> app.main/Slide)
+          :schema $ quote $ Fn Game Number Number (-> Slide)
         'slide-lines $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn slide-lines (model direction line time result)
             if (= line 4) result $ let
-                tiles $ collect-line (:tiles model) direction line 0 $ slice (:tiles model) 0 (Option :some 0)
+                tiles $ collect-line (:tiles model) direction line 0 $ slice (:tiles model) 0 (Some 0)
               recur model direction (inc line) time $ merge-line tiles direction line 0 time result
           :examples $ []
-          :schema $ quote $ Fn app.main/Game Number Number Number app.main/Slide (-> app.main/Slide)
+          :schema $ quote $ Fn Game Number Number Number Slide (-> Slide)
         'spawn $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn spawn (model time)
             let
@@ -423,7 +423,7 @@
                   :next-id $ inc $ :next-id model
                   :tiles $ conj (:tiles model) tile
           :examples $ []
-          :schema $ quote $ Fn app.main/Game Number (-> app.main/Game)
+          :schema $ quote $ Fn Game Number (-> Game)
         'step-at $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn step-at (from target start speed time)
             let
@@ -441,11 +441,11 @@
               + 0.94 $ * (- value 1) -0.044
               , 1
           :examples $ []
-          :schema $ quote $ Fn Number (-> quamolit.motion/ColorRgba)
+          :schema $ quote $ Fn Number (-> motion/ColorRgba)
         'tile-level $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn tile-level (tile) (:level tile)
           :examples $ []
-          :schema $ quote $ Fn app.main/Tile (-> Number)
+          :schema $ quote $ Fn Tile (-> Number)
         'tile-nodes $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn tile-nodes (tile time)
             let
@@ -473,8 +473,8 @@
                       , :font $ scene/FontSpec :family | :fallback (scene/FontFallback :monospace) :version 0
               [] root background text
           :examples $ []
-          :schema $ quote $ Fn app.main/Tile Number
-            -> $ List quamolit.scene-ir/SceneNode
+          :schema $ quote $ Fn Tile Number
+            -> $ List scene/SceneNode
         'travel-duration $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn travel-duration (tile)
             let
@@ -484,17 +484,17 @@
                 if (> x y) x y
                 , 8
           :examples $ []
-          :schema $ quote $ Fn app.main/Tile (-> Number)
+          :schema $ quote $ Fn Tile (-> Number)
         'x-at $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn x-at (tile time)
             step-at (:from-x tile) (:x tile) (:start tile) 8 time
           :examples $ []
-          :schema $ quote $ Fn app.main/Tile Number (-> Number)
+          :schema $ quote $ Fn Tile Number (-> Number)
         'y-at $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn y-at (tile time)
             step-at (:from-y tile) (:y tile) (:start tile) 8 time
           :examples $ []
-          :schema $ quote $ Fn app.main/Tile Number (-> Number)
+          :schema $ quote $ Fn Tile Number (-> Number)
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.main
           :require (quamolit.motion :as motion) (quamolit.scene-ir :as scene) (quamolit.canvas-scene :as renderer)
