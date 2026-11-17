@@ -7,9 +7,9 @@
 
 ### 运行与验证
 
-需要 Calcit CLI **0.42.1**、caps、Node.js 24、Corepack。运行时
-`@calcit/procs` 同样固定为 **0.42.1**，Quamolit 源码模块固定到 **0.0.20**
-（[tag](https://github.com/Quamolit/quamolit/tree/0.0.20)，配对 Calcit 0.38.0）。Yarn 使用 `node-modules` linker。
+需要 Calcit CLI **0.43.0**、caps、Node.js 24、Corepack。运行时
+`@calcit/procs` 同样固定为 **0.43.0**，Quamolit 源码模块固定到 **0.0.21**
+（[tag](https://github.com/Quamolit/quamolit/tree/0.0.21)，配对 Calcit 0.43.0）。Yarn 使用 `node-modules` linker。
 
 ```sh
 corepack enable
@@ -78,8 +78,8 @@ RAF 仍负责逻辑时钟与自动演示，不等于空闲时完全停止 RAF。
 
 ### English
 
-A working 2048 application defined in Calcit 0.42.1, consuming Quamolit's
-public Calcit source module at `0.0.20`, including the Canvas
+A working 2048 application defined in Calcit 0.43.0, consuming Quamolit's
+public Calcit source module at `0.0.21`, including the Canvas
 performance fix in PR #214. Rules, interruption-safe
 animation sampling and scene generation live in Calcit; the JavaScript host
 handles browser lifecycle only. Full-page Canvas with floating controls.
